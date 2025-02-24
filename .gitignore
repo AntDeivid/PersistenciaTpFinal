@@ -169,3 +169,22 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Docker
+docker-compose.override.yml
+docker-compose.local.yml
+docker-compose.test.yml
+docker-compose.ci.yml
+docker-compose.dev.yml
+docker-compose.prod.yml
+docker-compose.staging.yml
+docker-compose.*
+.dockerignore
+Dockerfile
+Dockerfile.*
+.docker/
+docker/
+docker-compose.yml
+docker-compose.yaml
+docker-compose.*.yml
+docker-compose.*.yaml

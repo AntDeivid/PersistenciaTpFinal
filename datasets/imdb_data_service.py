@@ -49,34 +49,69 @@ class IMDbDataService:
                 numVotes=int(row["numVotes"])
             )
             session.add(rating)
+            session.commit()  # Commit após cada inserção
         print("Avaliações inseridas em title_ratings.")
 
+    # def populate_title_crew(self, session: Session):
+    #     data = self.load_csv(self.datasets["title_crew"])
+
+    #     for row in data:
+    #         crew = TitleCrew(
+    #             tconst=row["tconst"],
+    #             directors=row["directors"] if row["directors"] != "\\N" else None,
+    #             writers=row["writers"] if row["writers"] != "\\N" else None
+    #         )
+    #         session.add(crew)
+    #         session.commit()  # Commit após cada inserção
+    #     print("Diretores e roteiristas inseridos em title_crew.")
+    
     def populate_title_crew(self, session: Session):
         data = self.load_csv(self.datasets["title_crew"])
 
         for row in data:
-            crew = TitleCrew(
-                tconst=row["tconst"],
-                directors=row["directors"] if row["directors"] != "\\N" else None,
-                writers=row["writers"] if row["writers"] != "\\N" else None
-            )
-            session.add(crew)
+            tconst = row["tconst"]
+            existing_title = session.query(TitleBasics).filter(TitleBasics.tconst == tconst).first()
+
+            if existing_title:  # Verifica se o tconst existe em title_basics
+                crew = TitleCrew(
+                    tconst=tconst,
+                    directors=row["directors"] if row["directors"] != "\\N" else None,
+                    writers=row["writers"] if row["writers"] != "\\N" else None
+                )
+                session.add(crew)
+                session.commit()  # Commit após cada inserção
+            else:
+                print(f"Registro com tconst {tconst} não encontrado em title_basics. Ignorando.")
         print("Diretores e roteiristas inseridos em title_crew.")
 
     def populate_title_principals(self, session: Session):
         data_principals = self.load_csv(self.datasets["title_principals"])
-        data_names = self.load_csv(self.datasets["name_basics"])
 
-        for row in data_names:
-            person = NameBasics(
-                nconst=row["nconst"],
-                primaryName=row["primaryName"],
-                birthYear=int(row["birthYear"]) if row["birthYear"] != "\\N" else None,
-                deathYear=int(row["deathYear"]) if row["deathYear"] != "\\N" else None,
-                primaryProfession=row["primaryProfession"] if row["primaryProfession"] != "\\N" else None,
-                knownForTitles=row["knownForTitles"] if row["knownForTitles"] != "\\N" else None
-            )
-            session.add(person)
+        for row in data_principals:
+            tconst = row["tconst"]
+            nconst = row["nconst"]
+
+            existing_title = session.query(TitleBasics).filter(TitleBasics.tconst == tconst).first()
+            existing_name = session.query(NameBasics).filter(NameBasics.nconst == nconst).first()
+
+            if existing_title and existing_name:  # Verifica se tconst e nconst existem
+                principal = TitlePrincipals(
+                    tconst=tconst,
+                    ordering=int(row["ordering"]),
+                    nconst=nconst,
+                    category=row["category"],
+                    job=row["job"] if row["job"] != "\\N" else None,
+                    characters=row["characters"] if row["characters"] != "\\N" else None
+                )
+                session.add(principal)
+                session.commit()  # Commit após cada inserção
+            else:
+                if not existing_title:
+                    print(f"Registro com tconst {tconst} não encontrado em title_basics. Ignorando.")
+                if not existing_name:
+                    print(f"Registro com nconst {nconst} não encontrado em name_basics. Ignorando.")
+
+        print("Profissionais inseridos em title_principals.")
 
         for row in data_principals:
             principal = TitlePrincipals(
@@ -88,6 +123,7 @@ class IMDbDataService:
                 characters=row["characters"] if row["characters"] != "\\N" else None
             )
             session.add(principal)
+            session.commit()  # Commit após cada inserção
 
         print("Profissionais inseridos em title_principals e name_basics.")
 
@@ -115,3 +151,4 @@ if __name__ == "__main__":
 
     service = IMDbDataService(datasets)
     service.run()
+    

@@ -19,4 +19,4 @@ class NameBasics(SQLModel, table=True):
     principals: List["TitlePrincipals"] = Relationship(back_populates="name")
 
     # Relação N:M com TitleBasics via tabela de associação TitlePrincipals
-    titles: List["TitleBasics"] = Relationship(back_populates="names", link_model=TitlePrincipals)
+    titles: List["TitleBasics"] = Relationship(back_populates="names", link_model=TitlePrincipals, sa_relationship_kwargs={"overlaps": "name, principals"})

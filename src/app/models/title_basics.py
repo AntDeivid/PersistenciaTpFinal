@@ -1,9 +1,6 @@
 from typing import Optional, List
-
 from sqlmodel import SQLModel, Field, Relationship
-
 from src.app.models.title_principals import TitlePrincipals
-
 
 class TitleBasics(SQLModel, table=True):
     __tablename__ = "title_basics"
@@ -28,4 +25,8 @@ class TitleBasics(SQLModel, table=True):
     principals: List["TitlePrincipals"] = Relationship(back_populates="title")
 
     # Relação N:M com NameBasics via tabela de associação TitlePrincipals
-    names: List["NameBasics"] = Relationship(back_populates="titles", link_model=TitlePrincipals)
+    names: List["NameBasics"] = Relationship(
+        back_populates="titles",
+        link_model=TitlePrincipals,
+        sa_relationship_kwargs={"overlaps": "principals,title"}  # Adicione o parâmetro overlaps aqui
+    )

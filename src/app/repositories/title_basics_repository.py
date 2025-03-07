@@ -135,3 +135,12 @@ class TitleBasicsRepository:
             
             titles = query.all()
             return titles
+
+    def get_titles_by_date_range(self, start_year: int, end_year: int) -> List[TitleBasics]:
+        with next(get_db()) as db:
+            self.logger.info(f"Buscando títulos lançados entre {start_year} e {end_year}")
+            return (
+                db.query(TitleBasics)
+                .filter(TitleBasics.startYear >= start_year, TitleBasics.startYear <= end_year)
+                .all()
+            )

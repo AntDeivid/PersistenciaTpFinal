@@ -17,56 +17,57 @@ class TitlePrincipalsRepository:
         self.logger = logging.getLogger(__name__)
 
     def create(self, title_principals: TitlePrincipals) -> TitlePrincipals:
-        try:
-            with next(get_db()) as db:
+        # chave composta: (tconst, ordering)
+        tconst = title_principals.tconst
+        ordering = title_principals.ordering
+        with next(get_db()) as db:
+            existing_title_principals = db.query(TitlePrincipals).filter(TitlePrincipals.tconst == tconst, TitlePrincipals.ordering == ordering).first()
+            if existing_title_principals:
+                self.logger.warning(f"TitlePrincipals com tconst {tconst} e ordering {ordering} já existe.")
+                raise ValueError(f"TitlePrincipals com tconst {tconst} e ordering {ordering} já existe.")
+
+            try:
                 db.add(title_principals)
                 db.commit()
                 db.refresh(title_principals)
                 self.logger.info(f"TitlePrincipals criado com sucesso! tconst: {title_principals.tconst}")
                 return title_principals
-        except IntegrityError:
-            self.logger.error(f"Erro ao criar TitlePrincipals! tconst: {title_principals.tconst}")
-            raise ValueError(f"Erro ao criar TitlePrincipals com tconst: {title_principals.tconst}")
+            except IntegrityError:
+                self.logger.error(f"Erro ao criar TitlePrincipals! tconst: {title_principals.tconst}")
+                raise ValueError(f"Erro ao criar TitlePrincipals com tconst: {title_principals.tconst}")
 
-    def get_by_tconst(self, tconst: str) -> Optional[TitlePrincipals]:
+    def get_by_tconst_and_ordering(self, tconst: str, ordering: int) -> Optional[TitlePrincipals]:
         with next(get_db()) as db:
-            self.logger.info(f"Buscando TitlePrincipals com tconst {tconst}")
-            return db.query(TitlePrincipals).filter(TitlePrincipals.tconst == tconst).first()
+            self.logger.info(f"Buscando TitlePrincipals com tconst {tconst} e ordering {ordering}")
+            return db.query(TitlePrincipals).filter(TitlePrincipals.tconst == tconst, TitlePrincipals.ordering == ordering).first()
 
-    def update(self, tconst: str, title_principals: TitlePrincipals) -> Optional[TitlePrincipals]:
-        try:
-            with next(get_db()) as db:
-                existing_title_principals = db.query(TitlePrincipals).filter(TitlePrincipals.tconst == tconst).first()
-                if not existing_title_principals:
-                    self.logger.warning(f"TitlePrincipals com tconst {tconst} não encontrado para atualização.")
-                    return None
+    def update(self, tconst: str, ordering: int, title_principals: TitlePrincipals) -> Optional[TitlePrincipals]:
+        with next(get_db()) as db:
+            existing_title_principals = db.query(TitlePrincipals).filter(TitlePrincipals.tconst == tconst, TitlePrincipals.ordering == ordering).first()
+            if not existing_title_principals:
+                self.logger.warning(f"TitlePrincipals com tconst {tconst} e ordering {ordering} não encontrado para atualização.")
+                return None
 
-                # Update fields
-                existing_title_principals.ordering = title_principals.ordering
-                existing_title_principals.nconst = title_principals.nconst
-                existing_title_principals.category = title_principals.category
-                existing_title_principals.job = title_principals.job
-                existing_title_principals.characters = title_principals.characters
+            # Update fields
+            existing_title_principals.nconst = title_principals.nconst
+            existing_title_principals.category = title_principals.category
+            existing_title_principals.job = title_principals.job
+            existing_title_principals.characters = title_principals.characters
 
-                db.commit()
-                db.refresh(existing_title_principals)
-                self.logger.info(f"TitlePrincipals com tconst {tconst} atualizado com sucesso!")
-                return existing_title_principals
-        except IntegrityError as e:
-            db.rollback()
-            self.logger.error(f"Erro ao atualizar TitlePrincipals com tconst {tconst}: {e}")
-            raise ValueError(f"Erro ao atualizar TitlePrincipals com tconst: {tconst}")
+            db.commit()
+            db.refresh(existing_title_principals)
+            self.logger.info(f"TitlePrincipals com tconst {tconst} e ordering {ordering} atualizado com sucesso!")
+            return existing_title_principals
         
-    def delete(self, tconst: str) -> bool:
+    def delete(self, tconst: str, ordering: int) -> bool:
         with next(get_db()) as db:
-            title_principals = db.query(TitlePrincipals).filter(TitlePrincipals.tconst == tconst).first()
+            title_principals = db.query(TitlePrincipals).filter(TitlePrincipals.tconst == tconst, TitlePrincipals.ordering == ordering).first()
             if not title_principals:
-                self.logger.warning(f"TitlePrincipals com tconst {tconst} não encontrado para exclusão.")
+                self.logger.warning(f"TitlePrincipals com tconst {tconst} e ordering {ordering} não encontrado para deleção.")
                 return False
-
             db.delete(title_principals)
             db.commit()
-            self.logger.info(f"TitlePrincipals com tconst {tconst} excluído com sucesso!")
+            self.logger.info(f"TitlePrincipals com tconst {tconst} e ordering {ordering} deletado com sucesso!")
             return True
         
     def get_all(self, page: int, limit: int) -> PaginationResultDto:
@@ -79,7 +80,7 @@ class TitlePrincipalsRepository:
             return PaginationResultDto(
                 page=page,
                 limit=limit,
-                total=total,
+                total_items=total,
                 number_of_pages=number_of_pages,
                 data=data
             )    

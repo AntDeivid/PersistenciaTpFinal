@@ -112,3 +112,26 @@ class TitleBasicsRepository:
             db.commit()
             self.logger.info(f"Título {tconst} deletado")
             return True
+
+    
+    def get_titles_by_genre_and_rating_with_cast(self,
+        genre: str, min_rating: float
+    ) -> List[TitleBasics]:
+        with next(get_db()) as db:
+            query = (
+                db.query(TitleBasics)
+                .join(TitleRatings, TitleBasics.tconst == TitleRatings.tconst)
+                .join(TitlePrincipals, TitleBasics.tconst == TitlePrincipals.tconst)
+                .join(NameBasics, TitlePrincipals.nconst == NameBasics.nconst)
+                .filter(TitleBasics.genres.ilike(f"%{genre}%"))
+                .filter(TitleRatings.averageRating >= min_rating)
+                .options(
+                    joinedload(TitleBasics.rating),  
+                    joinedload(TitleBasics.principals).joinedload(
+                        TitlePrincipals.name
+                    ),  
+                )
+            )
+            
+            titles = query.all()
+            return titles

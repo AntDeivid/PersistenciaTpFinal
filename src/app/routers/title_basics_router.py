@@ -87,10 +87,15 @@ def delete_title(tconst: str):
     response_model=List[TitleBasicsWithCast]
 )
 def get_titles_by_genre_rating_cast(
-    genre: str = Query(..., title="Genre to filter by"),
+    genre: str = Query("Reality_TV", title="Genre to filter by"),
     min_rating: float = Query(..., title="Minimum rating"),
-    offset: int = Query(0, title="Offset for pagination"),
-    limit: int = Query(10, title="Limit for pagination"),
 ):
-    titles = title_basics_repository.get_titles_by_genre_and_rating_with_cast(genre, min_rating,offset,limit)
+    titles = title_basics_repository.get_titles_by_genre_and_rating_with_cast(genre, min_rating)
     return titles
+
+@title_basics_router.get("/by-date-range/")
+def get_titles_by_date_range(
+    start_year: int = Query(..., title="Start year"),
+    end_year: int = Query(..., title="End year")
+):
+    return title_basics_repository.get_titles_by_date_range(start_year, end_year)

@@ -92,3 +92,10 @@ def get_titles_by_genre_rating_cast(
 ):
     titles = title_basics_repository.get_titles_by_genre_and_rating_with_cast(genre, min_rating)
     return titles
+
+@title_basics_router.get("/by-date-range/")
+def get_titles_by_date_range(
+    start_year: int = Query(..., title="Start year"),
+    end_year: int = Query(..., title="End year")
+):
+    return title_basics_repository.get_titles_by_date_range(start_year, end_year)

@@ -81,3 +81,13 @@ def delete_title(tconst: str):
             status_code=status.HTTP_404_NOT_FOUND, detail="Título não encontrado"
         )
     return None
+
+@title_basics_router.get(
+    "/by-genre-rating-cast/",
+)
+def get_titles_by_genre_rating_cast(
+    genre: str = Query(..., title="Genre to filter by"),
+    min_rating: float = Query(..., title="Minimum rating"),
+):
+    titles = title_basics_repository.get_titles_by_genre_and_rating_with_cast(genre, min_rating)
+    return titles

@@ -73,6 +73,13 @@ class TitlePrincipalsRepository:
         with next(get_db()) as db:
             query = db.query(TitlePrincipals)
             total = query.count()
-            title_principals = query.offset((page - 1) * limit).limit(limit).all()
-            return PaginationResultDto(total=total, items=title_principals)
-        
+            number_of_pages = (total + limit - 1) // limit
+            data = query.offset((page - 1) * limit).limit(limit).all()
+
+            return PaginationResultDto(
+                page=page,
+                limit=limit,
+                total=total,
+                number_of_pages=number_of_pages,
+                data=data
+            )    

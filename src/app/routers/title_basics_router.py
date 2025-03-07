@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import Optional,List
 from fastapi import APIRouter, HTTPException, status, Query, Path
-
+from src.app.dtos.TitleBasicWithCastDto import TitleBasicsWithCast
 from src.app.models.title_basics import TitleBasics
 from src.app.dtos.PaginationResultDto import PaginationResultDto
 from src.app.repositories.title_basics_repository import TitleBasicsRepository
@@ -81,3 +81,14 @@ def delete_title(tconst: str):
             status_code=status.HTTP_404_NOT_FOUND, detail="Título não encontrado"
         )
     return None
+
+@title_basics_router.get(
+    "/by-genre-rating-cast/",
+    response_model=List[TitleBasicsWithCast]
+)
+def get_titles_by_genre_rating_cast(
+    genre: str = Query("Reality_TV", title="Genre to filter by"),
+    min_rating: float = Query(..., title="Minimum rating"),
+):
+    titles = title_basics_repository.get_titles_by_genre_and_rating_with_cast(genre, min_rating)
+    return titles

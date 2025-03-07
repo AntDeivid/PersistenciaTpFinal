@@ -28,14 +28,14 @@ class IMDbDataService:
             name_basic = NameBasics(
                 nconst=row["nconst"],
                 primaryName=row["primaryName"],
-                birthYear=int(row["birthYear"]) if row["birthYear"] != "\\N" else None,
-                deathYear=int(row["deathYear"]) if row["deathYear"] != "\\N" else None,
-                primaryProfession=row["primaryProfession"] if row["primaryProfession"] != "\\N" else None,
-                knownForTitles=row["knownForTitles"] if row["knownForTitles"] != "\\N" else None,
+                birthYear=int(row["birthYear"]) if row["birthYear"] else None,
+                deathYear=int(row["deathYear"]) if row["deathYear"] else None,
+                primaryProfession=row["primaryProfession"] if row["primaryProfession"] else None,
+                knownForTitles=row["knownForTitles"] if row["knownForTitles"] else None,
             )
             session.add(name_basic)
         print("Dados de nomes inseridos em name_basics.")
-        session.commit() # Commit após adicionar todos os registros
+        session.commit() 
 
 
     def populate_title_basics(self, session: Session):
@@ -48,14 +48,14 @@ class IMDbDataService:
                 primaryTitle=row["primaryTitle"],
                 originalTitle=row["originalTitle"],
                 isAdult=row["isAdult"] == "1",
-                startYear=int(row["startYear"]) if row["startYear"] != "\\N" else None,
-                endYear=int(row["endYear"]) if row["endYear"] != "\\N" else None,
-                runtimeMinutes=int(row["runtimeMinutes"]) if row["runtimeMinutes"] != "\\N" else None,
-                genres=row["genres"] if row["genres"] != "\\N" else None
+                startYear=int(row["startYear"]) if row["startYear"] else None,
+                endYear=int(row["endYear"]) if row["endYear"] else None,
+                runtimeMinutes=int(row["runtimeMinutes"]) if row["runtimeMinutes"] else None,
+                genres=row["genres"] if row["genres"] else None
             )
             session.add(title)
         print("Títulos inseridos em title_basics.")
-        session.commit()  # Commit após adicionar todos os registros
+        session.commit()  
 
 
     def populate_title_ratings(self, session: Session):
@@ -69,7 +69,7 @@ class IMDbDataService:
             )
             session.add(rating)
         print("Avaliações inseridas em title_ratings.")
-        session.commit()  # Commit após adicionar todos os registros
+        session.commit()  
 
 
     def populate_title_crew(self, session: Session):
@@ -79,17 +79,17 @@ class IMDbDataService:
             tconst = row["tconst"]
             existing_title = session.query(TitleBasics).filter(TitleBasics.tconst == tconst).first()
 
-            if existing_title:  # Verifica se o tconst existe em title_basics
+            if existing_title:  
                 crew = TitleCrew(
                     tconst=tconst,
-                    directors=row["directors"] if row["directors"] != "\\N" else None,
-                    writers=row["writers"] if row["writers"] != "\\N" else None
+                    directors=row["directors"] if row["directors"] else None,
+                    writers=row["writers"] if row["writers"] else None
                 )
                 session.add(crew)
             else:
                 print(f"Registro com tconst {tconst} não encontrado em title_basics. Ignorando.")
         print("Diretores e roteiristas inseridos em title_crew.")
-        session.commit() # Commit após adicionar todos os registros
+        session.commit() 
 
 
     def populate_title_principals(self, session: Session):
@@ -102,20 +102,20 @@ class IMDbDataService:
             existing_title = session.query(TitleBasics).filter(TitleBasics.tconst == tconst).first()
             existing_name = session.query(NameBasics).filter(NameBasics.nconst == nconst).first()
 
-            if existing_title and existing_name:  # Verifica se tconst e nconst existem
+            if existing_title and existing_name:  
                 try:
                     ordering = int(row["ordering"])
                 except ValueError:
                     print(f"Valor inválido para 'ordering' em tconst {tconst}, nconst {nconst}. Ignorando registro.")
-                    continue  # Pula para o próximo registro
+                    continue  
 
                 principal = TitlePrincipals(
                     tconst=tconst,
                     ordering=ordering,
                     nconst=nconst,
                     category=row["category"],
-                    job=row["job"] if row["job"] != "\\N" else None,
-                    characters=row["characters"] if row["characters"] != "\\N" else None
+                    job=row["job"] if row["job"] else None,
+                    characters=row["characters"] if row["characters"] else None
                 )
                 session.add(principal)
 
@@ -126,7 +126,7 @@ class IMDbDataService:
                     print(f"Registro com nconst {nconst} não encontrado em name_basics. Ignorando.")
 
         print("Profissionais inseridos em title_principals.")
-        session.commit() # Commit após adicionar todos os registros
+        session.commit() 
 
 
 
@@ -146,11 +146,11 @@ if __name__ == "__main__":
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
     datasets = {
-        "title_basics": os.path.join(BASE_DIR, "title.basics.csv"),
-        "title_ratings": os.path.join(BASE_DIR, "title.ratings.csv"),
-        "title_crew": os.path.join(BASE_DIR, "title.crew.csv"),
-        "title_principals": os.path.join(BASE_DIR, "title.principals.new.csv"),
-        "name_basics": os.path.join(BASE_DIR, "name.basics.csv")
+        "title_basics": os.path.join(BASE_DIR, "./filtrados/filtered_title.basics.tsv"),
+        "title_ratings": os.path.join(BASE_DIR, "./filtrados/filtered_title.ratings.tsv"),
+        "title_crew": os.path.join(BASE_DIR, "./filtrados/filtered_title.crew.tsv"),
+        "title_principals": os.path.join(BASE_DIR, "./filtrados/filtered_title.principals.tsv"),
+        "name_basics": os.path.join(BASE_DIR, "./filtrados/filtered_name.basics.tsv")
     }
 
     service = IMDbDataService(datasets)

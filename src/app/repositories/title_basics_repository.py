@@ -114,7 +114,7 @@ class TitleBasicsRepository:
             return True
 
     
-    def get_titles_by_genre_and_rating_with_cast(
+    def get_titles_by_genre_and_rating_with_cast(self,
         genre: str, min_rating: float
     ) -> List[TitleBasics]:
         with next(get_db()) as db:
@@ -132,6 +132,6 @@ class TitleBasicsRepository:
                     ),  
                 )
             )
-
+            
             titles = query.all()
             return titles

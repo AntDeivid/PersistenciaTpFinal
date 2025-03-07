@@ -21,6 +21,23 @@ class IMDbDataService:
             data = list(reader)
             return data[:limit] if limit else data
 
+    def populate_name_basics(self, session: Session):
+        data = self.load_csv(self.datasets["name_basics"])
+
+        for row in data:
+            name_basic = NameBasics(
+                nconst=row["nconst"],
+                primaryName=row["primaryName"],
+                birthYear=int(row["birthYear"]) if row["birthYear"] != "\\N" else None,
+                deathYear=int(row["deathYear"]) if row["deathYear"] != "\\N" else None,
+                primaryProfession=row["primaryProfession"] if row["primaryProfession"] != "\\N" else None,
+                knownForTitles=row["knownForTitles"] if row["knownForTitles"] != "\\N" else None,
+            )
+            session.add(name_basic)
+        print("Dados de nomes inseridos em name_basics.")
+        session.commit() # Commit após adicionar todos os registros
+
+
     def populate_title_basics(self, session: Session):
         data = self.load_csv(self.datasets["title_basics"])
 
@@ -38,6 +55,8 @@ class IMDbDataService:
             )
             session.add(title)
         print("Títulos inseridos em title_basics.")
+        session.commit()  # Commit após adicionar todos os registros
+
 
     def populate_title_ratings(self, session: Session):
         data = self.load_csv(self.datasets["title_ratings"])
@@ -49,22 +68,10 @@ class IMDbDataService:
                 numVotes=int(row["numVotes"])
             )
             session.add(rating)
-            session.commit()  # Commit após cada inserção
         print("Avaliações inseridas em title_ratings.")
+        session.commit()  # Commit após adicionar todos os registros
 
-    # def populate_title_crew(self, session: Session):
-    #     data = self.load_csv(self.datasets["title_crew"])
 
-    #     for row in data:
-    #         crew = TitleCrew(
-    #             tconst=row["tconst"],
-    #             directors=row["directors"] if row["directors"] != "\\N" else None,
-    #             writers=row["writers"] if row["writers"] != "\\N" else None
-    #         )
-    #         session.add(crew)
-    #         session.commit()  # Commit após cada inserção
-    #     print("Diretores e roteiristas inseridos em title_crew.")
-    
     def populate_title_crew(self, session: Session):
         data = self.load_csv(self.datasets["title_crew"])
 
@@ -79,15 +86,16 @@ class IMDbDataService:
                     writers=row["writers"] if row["writers"] != "\\N" else None
                 )
                 session.add(crew)
-                session.commit()  # Commit após cada inserção
             else:
                 print(f"Registro com tconst {tconst} não encontrado em title_basics. Ignorando.")
         print("Diretores e roteiristas inseridos em title_crew.")
+        session.commit() # Commit após adicionar todos os registros
+
 
     def populate_title_principals(self, session: Session):
-        data_principals = self.load_csv(self.datasets["title_principals"])
+        data = self.load_csv(self.datasets["title_principals"])
 
-        for row in data_principals:
+        for row in data:
             tconst = row["tconst"]
             nconst = row["nconst"]
 
@@ -95,16 +103,22 @@ class IMDbDataService:
             existing_name = session.query(NameBasics).filter(NameBasics.nconst == nconst).first()
 
             if existing_title and existing_name:  # Verifica se tconst e nconst existem
+                try:
+                    ordering = int(row["ordering"])
+                except ValueError:
+                    print(f"Valor inválido para 'ordering' em tconst {tconst}, nconst {nconst}. Ignorando registro.")
+                    continue  # Pula para o próximo registro
+
                 principal = TitlePrincipals(
                     tconst=tconst,
-                    ordering=int(row["ordering"]),
+                    ordering=ordering,
                     nconst=nconst,
                     category=row["category"],
                     job=row["job"] if row["job"] != "\\N" else None,
                     characters=row["characters"] if row["characters"] != "\\N" else None
                 )
                 session.add(principal)
-                session.commit()  # Commit após cada inserção
+
             else:
                 if not existing_title:
                     print(f"Registro com tconst {tconst} não encontrado em title_basics. Ignorando.")
@@ -112,23 +126,13 @@ class IMDbDataService:
                     print(f"Registro com nconst {nconst} não encontrado em name_basics. Ignorando.")
 
         print("Profissionais inseridos em title_principals.")
+        session.commit() # Commit após adicionar todos os registros
 
-        for row in data_principals:
-            principal = TitlePrincipals(
-                tconst=row["tconst"],
-                ordering=int(row["ordering"]),
-                nconst=row["nconst"],
-                category=row["category"],
-                job=row["job"] if row["job"] != "\\N" else None,
-                characters=row["characters"] if row["characters"] != "\\N" else None
-            )
-            session.add(principal)
-            session.commit()  # Commit após cada inserção
 
-        print("Profissionais inseridos em title_principals e name_basics.")
 
     def run(self):
         with Session(engine) as session:
+            self.populate_name_basics(session)
             self.populate_title_basics(session)
             self.populate_title_ratings(session)
             self.populate_title_crew(session)
@@ -145,10 +149,9 @@ if __name__ == "__main__":
         "title_basics": os.path.join(BASE_DIR, "title.basics.csv"),
         "title_ratings": os.path.join(BASE_DIR, "title.ratings.csv"),
         "title_crew": os.path.join(BASE_DIR, "title.crew.csv"),
-        "title_principals": os.path.join(BASE_DIR, "title.principals.csv"),
+        "title_principals": os.path.join(BASE_DIR, "title.principals.new.csv"),
         "name_basics": os.path.join(BASE_DIR, "name.basics.csv")
     }
 
     service = IMDbDataService(datasets)
     service.run()
-    

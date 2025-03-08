@@ -6,7 +6,7 @@ from src.app.models.title_ratings import TitleRatings
 from src.app.dtos.PaginationResultDto import PaginationResultDto
 from src.app.repositories.title_ratings_repository import TitleRatingsRepository
 
-title_ratings_router = APIRouter(prefix="/api/ratings", tags=["Ratings"])
+title_ratings_router = APIRouter(prefix="/api/ratings", tags=["Title Ratings"])
 
 title_ratings_repository = TitleRatingsRepository()
 

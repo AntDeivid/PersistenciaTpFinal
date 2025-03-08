@@ -5,7 +5,7 @@ from src.app.models.title_basics import TitleBasics
 from src.app.dtos.PaginationResultDto import PaginationResultDto
 from src.app.repositories.title_basics_repository import TitleBasicsRepository
 
-title_basics_router = APIRouter(prefix="/api/titles", tags=["Titles"])
+title_basics_router = APIRouter(prefix="/api/titles", tags=["Title Basics"])
 
 title_basics_repository = TitleBasicsRepository()
 
